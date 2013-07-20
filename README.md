@@ -20,7 +20,7 @@ data-tinyswitch=".selector@action1:action2"
 就可以操控对应的内容展示隐藏,或者启用禁用,以及其他一些别的什么逻辑.
 
 
-`.selector` 为标准的jQuery支持的css选择器, 它告诉`tinyswitch`, 谁是点击后的操作对象
+* `.selector` 为标准的jQuery支持的css选择器, 它告诉`tinyswitch`, 谁是点击后的操作对象
 * `@` @是个分界符,表示后面的部分是`行为`
 * `action1` 表示`选中时`执行这个行为
 * `:` :分界符

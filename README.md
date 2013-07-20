@@ -58,6 +58,26 @@ $.tinyswitch.addAction('clearValues',function(elements){
 * 当`data-tinyswitchvalue="true"` 时,为`选中`
 * 当`data-tinyswitchvalue="true"` 时,为`非选中`
 
+以上展示了基础用法,但`tinyswitch`还支持更多的语法,比如,多串规则
+
+```
+data-tinyswitch=".selector@action1:action2, .selector@action3:action4"
+```
+
+多行为同时执行
+
+```
+data-tinyswitch=".selector@action1&action2:action2&action4"
+```
+
+有些情况下(比如插件中), 无法使用全局选择器来定位目标,为此,`tinyswitch`提供了一种相对于绑定事件的元素定位的机制:
+
+```
+data-tinyswitch=".selector@~action1"
+```
+
+`~` 表示当前元素的父元素中查找`.selector`, `~` 用数量来表示层级, 比如`~~`即表示`.parent().parent.find(".selector")`.
+
 事件支持:
 
 `tinyswitch`目前只提供两个事件:
@@ -75,6 +95,13 @@ $.tinyswitch.addAction('clearValues',function(elements){
       return false;
     }
   })
+```
+
+```javascript
+    //使用按钮模拟一个switch
+    $('#xxoo').on('tinyswitch.beforeswitch',function(){
+        $(this).attr('data-tinyswitchvalue',function(i,v){ return v==='true'?'false':'true' })
+    });
 ```
 
 例子演示: http://darkfe.com/tinyswitch/demo.html

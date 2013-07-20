@@ -27,6 +27,7 @@ data-tinyswitch=".selector@action1:action2"
 * `action2` 表示`非选中时`执行这个行为, 非选中时的行为是可选的.
 
 目前支持的默认行为有:
+
 1. show
 2. hide
 3. disabled 或者 off

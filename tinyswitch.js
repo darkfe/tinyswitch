@@ -41,7 +41,7 @@
 		执行规则
 	*/
 	var runSwitch = function(placeAction, sender, type){
-		console.log(sender, placeAction)
+		 
 		$.each(placeAction,function(index, item){
 			var scope = $(document);
 			var parentLevel = 0;

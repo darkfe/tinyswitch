@@ -21,10 +21,10 @@ data-tinyswitch=".selector@action1:action2"
 
 
 `.selector` 为标准的jQuery支持的css选择器, 它告诉`tinyswitch`, 谁是点击后的操作对象
-`@` @是个分界符,表示后面的部分是`行为`
-`action1` 表示`选中时`执行这个行为
-`:` :分界符
-`action2` 表示`非选中时`执行这个行为, 非选中时的行为是可选的.
+* `@` @是个分界符,表示后面的部分是`行为`
+* `action1` 表示`选中时`执行这个行为
+* `:` :分界符
+* `action2` 表示`非选中时`执行这个行为, 非选中时的行为是可选的.
 
 目前支持的默认行为有:
 1. show
@@ -45,22 +45,23 @@ $.tinyswitch.addAction('clearValues',function(elements){
 
 对于`checkbox`和`radio`来说:
 
-当`checked`属性为`true`时, 为`选中`
-当`checked`属性为`false`时, 为`非选中`
+* 当`checked`属性为`true`时, 为`选中`
+* 当`checked`属性为`false`时, 为`非选中`
 
 对于`select`来说:
 
-当`selected`属性为`true`时, 为`选中`
-当`selected`属性为`false`时, 为`非选中`
+* 当`selected`属性为`true`时, 为`选中`
+* 当`selected`属性为`false`时, 为`非选中`
 
 对于其他任意元素来说:
 
-当`data-tinyswitchvalue="true"` 时,为`选中`
-当`data-tinyswitchvalue="true"` 时,为`非选中`
+* 当`data-tinyswitchvalue="true"` 时,为`选中`
+* 当`data-tinyswitchvalue="true"` 时,为`非选中`
 
 事件支持:
 
 `tinyswitch`目前只提供两个事件:
+
 1. `tinyswitch.beforeswitch` 事件, 如果在这个事件中返回`false`, 将停止执行`switch`的操作.
 2. `tinyswitch.afterswitch` 事件, `switch`完成之后触发
 

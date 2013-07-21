@@ -189,7 +189,7 @@ data-tinyswitch="relativeflag$selector@action"
 
 * `2!` 表示`.parent().parent()`
 * `3+` 表示`.next().next().next()`
-* `1-` 表示`.prev().prev()`
+* `4-` 表示`.prev().prev().prev().prev()`
 
 对于上面的例子,我们可以写成这样来实现需求:
 

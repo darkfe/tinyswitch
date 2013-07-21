@@ -14,17 +14,15 @@ TinySwitch 提供了这样的一种方案来试图简化(或者复杂化?)这个
 你只需要在控件上配置:
 
 ```
-data-tinyswitch="selector@action"
+data-tinyswitch="expr ? action1 : action2 selector"
 ```
 
 就可以操控对应的内容展示隐藏,或者启用禁用,以及其他一些别的什么逻辑.
 
+* `expr`     为判断执行`action`方式, 目前支持判断`checked`,`unchecked`,`value`和`index`.
 * `selector` 为标准的jQuery支持的css选择器, 它告诉`TinySwitch`, 谁是点击后的操作对象
-* `@` @是个分界符,表示后面的部分是`行为`
-* `action` 表示`选中时`执行这个行为 
-
-
-对于不同的控件, `TinySwitch`提供了三种配置方式来满足需求:
+* `action1`  当`expr`结果为`true`时执行这个行为 
+* `action2`  当`expr`结果为`false`时执行这个行为 
 
 ### 单选框
 
@@ -32,11 +30,11 @@ data-tinyswitch="selector@action"
 
 ```html
 <label>
-  <input type="radio" data-tinyswitch="#box@show"> 显示box
+  <input type="radio" data-tinyswitch="checked ? show #box"> 显示box
 </label>
 
 <label>
-  <input type="radio" data-tinyswitch="#box@hide"> 隐藏box
+  <input type="radio" data-tinyswitch="checked ? hide #box"> 隐藏box
 </label>
 
 <div id="box">我是box</div>
@@ -49,7 +47,7 @@ data-tinyswitch="selector@action"
 
 ```html
 <label>
-  <input type="checkbox" data-tinyswitch="#box@show:hide, #list@show:hide"> 显示或者隐藏box
+  <input type="checkbox" data-tinyswitch="checked ? show : hide #box"> 显示或者隐藏box
 </label> 
 
 <div id="box">我是box</div>
@@ -58,21 +56,8 @@ data-tinyswitch="selector@action"
 
 ### 下拉列表
 
-下拉列表同时拥有两种配置方式, 一种与单选框一致:
-
 ```html
-<select> 
-  <option value="1" data-tinyswitch="#box@show">value is 1</option>
-  <option value="2" data-tinyswitch="#box@hide">value is 2</option>
-</select>
-
-<div id="box">我是box</div>
-```
-
-但如果一个`select`中只有一个选项需要增加行为, 其他选项与该选项行为互斥的话,这样配置方法就太过繁琐, 可以使用另一种方式
-
-```html
-<select data-tinyswitch="#box@show(value==1)&hide(value!=1)"> 
+<select data-tinyswitch="value==1 ? show : hide #box"> 
   <option value="1">value is 1</option>
   <option value="2">value is 2</option>
 </select>
@@ -80,12 +65,12 @@ data-tinyswitch="selector@action"
 <div id="box">我是box</div>
 ```
 
-`#box@show(value==1)&hide(value!=1)` 表示:
+`value==1 ? show : hide #box` 表示:
 
 * 当`select`的`value == 1`的时候,执行`show`这个行为
 * 当`select`的`value != 1`的时候,执行`hide`这个行为 
 
-`(value==1)` 表达式中的`value`关键字表示当前`select`的`value`值
+`value==1` 表达式中的`value`关键字表示当前`select`的`value`值
 
 `TinySwitch` 还支持`index`关键字,表示当前`select`的`selectIndex`索引
  
@@ -100,13 +85,17 @@ data-tinyswitch="selector@action"
 * `$=`  结尾等于
 * `^=`  开头等于
 
+当与`value`或者`index`比较的值不是数字时,需要使用**单引号**将内容包裹起来.
+
+如果在单引号中包含单引号,需要为单引号增加转义符`value='a\'b`.
+
 ### 更复杂的选择器
 
 `TinySwitch` 可以使用`jQuery`支持的所有`css`选择器来进行全局的元素定位, 比如:
 
 ```html
 <label>
-  <input type="checkbox" data-tinyswitch="#box,#list@show:hide"> 显示或者隐藏box 和 list
+  <input type="checkbox" data-tinyswitch="checked ? show : hide #box,#list"> 显示或者隐藏box 和 list
 </label> 
 
 <div id="box">我是box</div>
@@ -121,7 +110,7 @@ data-tinyswitch="selector@action"
 
 ```html
 <label>
-  <input type="checkbox" data-tinyswitch="#box@show:hide; #list@show:hide"> 显示或者隐藏box 和 list
+  <input type="checkbox" data-tinyswitch="checked ? show : hide #box; checked ? show : hide #list"> 显示或者隐藏box 和 list
 </label> 
 
 <div id="box">我是box</div>
@@ -134,7 +123,7 @@ data-tinyswitch="selector@action"
 
 ```html
 <label>
-  <input type="checkbox" data-tinyswitch="#box@show&disabled:hide"> 显示box,并且禁用box中的控件, 或者隐藏box
+  <input type="checkbox" data-tinyswitch="checked ? show&disabled : hide #box"> 显示box,并且禁用box中的控件, 或者隐藏box
 </label> 
 
 <div id="box">
@@ -152,7 +141,7 @@ data-tinyswitch="selector@action"
 但有很多场景中, 我们需要相对于当前控件对目标的容器进行定位, 比如下例:
 
 ```html 
-<select data-tinyswitch=".list@enabled(value=='1')&disabled(value$='2')"> 
+<select data-tinyswitch="value==1 ? show : hide .list"> 
   <option value="1">启用</option>
   <option value="2">禁用</option> 
 </select>  
@@ -160,7 +149,7 @@ data-tinyswitch="selector@action"
   <input type="text" value="我是一个文本框">
 </div>
 
-<select data-tinyswitch=".list@enabled(value=='1')&disabled(value$='2')"> 
+<select data-tinyswitch="value==1 ? show : hide .list"> 
   <option value="1">启用</option>
   <option value="2">禁用</option> 
 </select>
@@ -171,38 +160,44 @@ data-tinyswitch="selector@action"
 
 我们希望每个`select`都只控制它下面的`.list`,但这样做会导致两个`.list`同时被控制.
 
-针对这种场景 `TinySwitch` 提供了一种简单的标记方式来实现相对于当前控件的定位方式, 语法为:
+针对这种场景 `TinySwitch` 提供了一种简单的标记方式来实现相对于当前控件的定位方式:
 
 ```
-data-tinyswitch="relativeflag$selector@action"
+data-tinyswitch="value==1 ? show : hide next~.list"
 ```
+ 
+* `next` 表示当前控件的`.next()`节点
+* `~` 表示相对定位规则结束
 
-`relativeflag` 支持如下标记:
+相对定位规则支持如下标记:
 
-* `!` 当前控件的`.parent()`
-* `+` 当前控件的`.next()`
-* `-` 当前控件的`.prev()`
-* `^` 当前控件的`.prevAll()`
-* `~` 当前控件的`.nextAll()`
+* `next` 
+* `prev`
+* `nextAll`
+* `prevAll`
+* `parent`
 
-对于`!`和`+`和`-`, `TinySwitch`还支持量词:
+你可以组合使用它们,比如:
 
-* `2!` 表示`.parent().parent()`
-* `3+` 表示`.next().next().next()`
-* `4-` 表示`.prev().prev().prev().prev()`
+
+```
+data-tinyswitch="value==1 ? show : hide parent.next.next~.list"
+```
+ 
 
 对于上面的例子,我们可以写成这样来实现需求:
 
+
 ```html 
-<select data-tinyswitch="+$.list@enabled(value=='1')&disabled(value$='2')"> 
+<select data-tinyswitch="value==1 ? show : hide next~.list"> 
   <option value="1">启用</option>
   <option value="2">禁用</option> 
-</select>
+</select>  
 <div class="list">
   <input type="text" value="我是一个文本框">
 </div>
 
-<select data-tinyswitch="+$.list@enabled(value=='1')&disabled(value$='2')"> 
+<select data-tinyswitch="value==1 ? show : hide next~.list"> 
   <option value="1">启用</option>
   <option value="2">禁用</option> 
 </select>
@@ -210,7 +205,6 @@ data-tinyswitch="relativeflag$selector@action"
   <input type="text" value="我是一个文本框">
 </div>
 ```
-
 ### TinySwitch 默认自带的`action` 
 
 1. `show`:   显示这个容器
@@ -252,5 +246,3 @@ $.tinyswitch.addAction('clearValues',function(elements){
         $(this).attr('data-tinyswitchvalue',function(i,v){ return v==='true'?'false':'true' })
     });
 ```
-
-例子演示: http://darkfe.com/tinyswitch/demo.html

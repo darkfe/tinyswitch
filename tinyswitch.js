@@ -17,184 +17,190 @@
 
 	var HTML_DATA_PREFIX = 'data-tinyswitch'; 
 
-	var DEBUG = true;
+	var DEBUG = false;
 
 	var log = function(){
 		if(DEBUG)
 			console.log.apply(console,arguments);
 	}
 
-	var parseRule = function(rule, type){
-		var placeAction = [];
+	var parseRule = function(rule){
 
-		var parsePatternForProxyMode = /;?\s*(?:([!^+-~\d]+)\$)?([^@]+)\@((?:\w+(?:\((?:value|index)?[=><!$*^]{1,2}\s*(?:\d+|'(?:\\'|[^'])+')\))?&?)*)/ig;
+		/*
+		(?:;\s*)?
+		(
+		(?:
+		(?:value|index)
+		[=><!$*^]+
+		(?:\d+|'(?:\\'|[^'])+')
+		)|
+		(?:checked|unchecked)
+		)
+		\s
+		\?
+		\s
+		(\S+)
+		(?:
+		\s
+		\:
+		\s
+		(\S+))?
+		\s
+		(?:((?:\.\w+)*)~)?
+		([^;]+)
+		*/
+		var rulePattern1 = /(?:;\s*)?((?:(?:value|index)[=><!$*^]+(?:\d+|'(?:\\'|[^'])+'))|(?:checked|unchecked))\s\?\s(\S+)(?:\s\:\s(\S+))?\s(?:((?:\w+\.)*\w+)~)?((?:[^;']+|'(?:\\'|[^'])+')+)/ig;
 
-		var parsePatternSimple = /;?\s*([!^+-~\d]+\$)?([^@]+)\@([\w\-&]+)(?::([~!+\d]*)([\w\-&]+))?/ig;
+		/*
+		(?:;\s*)?if\(
+		(
+		(?:
+		(?:value|index)
+		[=><!$*^]+
+		(?:\d+|'(?:\\'|[^'])+')
+		)|
+		(?:checked|unchecked)
+		)
+		\)
+		take\(
+		{(?:([^~]*)~)?((?:[^}']|'(?:\\'|[^'])+')+)}
+		\)
+		do\(
+		([^)]+)
+		\)
+		(?:else\(
+		([^)]+)
+		\))?
+		*/
+		var rulePattern2 = /(?:;\s*)?if\(((?:(?:value|index)[=><!$*^]+(?:\d+|'(?:\\'|[^'])+'))|(?:checked|unchecked))\)take\({(?:([^~]*)~)?((?:[^}']|'(?:\\'|[^'])+')+)}\)do\(([^)]+)\)(?:else\(([^)]+)\))?/ig;
 
-		var isSelectMode = type === 'selectmode';
+		var exprPattern = /(\w+)(?:([=><!$*^]{1,2})\s*(?:(\d+)|'((?:\\'|[^'])+)'))?/i;
 
-		var parsePattern = isSelectMode ?  parsePatternForProxyMode : parsePatternSimple;
- 
-		var currentRule;
+		var rulePattern = rulePattern1;
 
-		while(currentRule = parsePattern.exec(rule)){
-			placeAction.push({
+		var namedGroup = {
+			ifDo     : 2,
+			elseDo   : 3,
+			pos      : 4,
+			selector : 5
+		}
 
-				isSelectMode      : isSelectMode,
-				selectedRelative : currentRule[1], 
-				selectedSelector : currentRule[2],
-				selectedAction   : currentRule[3],
+		if(rule.indexOf('if(') === 0){
 
-				unselectSelector : currentRule[2],
-				unselectRelative : currentRule[1],
-				unselectAction   : currentRule[5]
+			rulePattern = rulePattern2;
+
+			namedGroup = {
+				ifDo     : 4,
+				elseDo   : 5,
+				pos      : 2,
+				selector :3
+			}
+		}
+
+		var current = null;
+
+		var ruleList = [];
+
+		while(current = rulePattern.exec(rule)){
+
+			var expr = current[1].match(exprPattern);
+
+			ruleList.push({
+				expr     : {
+					keyword  : expr[1],
+					operator : expr[2],
+					value    : expr[3] || expr[4]
+				}, 
+				ifDo     : (current[namedGroup.ifDo]||'').split('&'),
+				elseDo   : (current[namedGroup.elseDo]||'').split('&'),
+				pos      : (current[namedGroup.pos]||'') ? (current[namedGroup.pos]||'').split('.') : [],
+				selector : current[namedGroup.selector]
 			});
 		}
 
-		log(placeAction);
+		return ruleList;
+	} 
 
-		return placeAction;
-	}
+	var runSwitch = function(rule, sender){
  
+		var ruleActions = parseRule(rule);
 
-	/*
-		执行规则
-	*/
-	var runSwitch = function(placeAction, sender, type){
-		 
-		$.each(placeAction,function(index, item){ 
+		$.each(ruleActions, function(index, ruleItem){
+ 
+			var result = false;
+			var value = $(sender).val();
+			var target = $(document); 
+			var tempTarget = $(sender);
+			var tempLevel;
+			var elements = null;
+			var runBranch = '';
+			var loopTimes = 0;
 
-			/*
-				定义:
-				! 父级    [number]!    0! 表示无   ! 表示 1!
-				+ 当前对象的下一个  [number]+
-				- 当前对象的上一个  [number]-
-				^ 等同当前对象的prevAll()
-				~ 等同当前对象的nextAll()
-			*/
-			var scope = $(document);
-			var parentLevel = 0;
-			var chars;
-			var exprPattern = /(\d*)([!+^~-])/g;
-			var current;
-			var times = 0;
-			var method = '';
-			if(this[type + 'Relative']){
-				scope = sender;   
-				while(current = exprPattern.exec(this[type + 'Relative'])){ 
-					times = current[1] ? parseInt(current[1],10) : 1;
-
-					switch(current[2]){
-						case '!':  
-							method = 'parent'; 
-						break;
-						case '+':
-							method = 'next'; 
-						break;
-						case '-': 
-							method = 'prev';
-						break;
-						case '~':
-							method = 'nextAll';
-							times = 1;
-						break;
-						case '^':
-							method = 'prevAll';
-							times = 1;
-						break;
-					}
-
-					while(times){
-						scope = scope[method]();
-						times--;
-					}
-				} 
-
-				log('current scope offset:', this[type + 'Relative'], scope);
-			}
-			
-			var actionType = this[type + 'Action'];
-
-			if(!actionType){
-				return;
-			}
-
-			var currentType;
-			var actionTypePattern = /(\w+)(?:\((value|index)?([=><!$*^]{1,2})\s*(?:(\d+)|'(\\'|[^']+)'\)))?&?/ig;
-			var actionTypes = [];
-
-			while(currentType = actionTypePattern.exec(actionType)){
-				actionTypes.push({
-					action : currentType[1],
-					prop   : currentType[2],
-					expr   : currentType[3],
-					value  : currentType[4] || currentType[5]
-				});
-			}
-
-			log('current action types:', actionType, actionTypes);
-
-			//这里选中的元素要包含scope自己,否则 + - 这种就不能工作了
-			var elements = scope.find(this[type + 'Selector']).add(scope.filter(this[type + 'Selector']));
-
-			if(item.isSelectMode){
-				$.each(actionTypes,function(index, typeItem){ 
-					var result = false;
-					var value = $(sender).val();
-					if(typeItem.prop == 'index'){
-						typeItem.value = parseInt(typeItem.value,10) || 0;
+			switch(ruleItem.expr.keyword){
+				case 'checked':
+					result = $(sender).is(':checked');
+				break; 
+				case 'value':
+				case 'index':
+					if(ruleItem.expr.keyword === 'index'){
+						ruleItem.expr.value = parseInt(ruleItem.expr.value,10) || 0;
 						value = $(sender)[0].selectedIndex;
-					} 
-					/*
-						定义:
-						==	相等
-						!=  不等
-						>   大于
-						<   小于
-						*=  包含
-						$=  结尾等于
-						^=  开头等于
-					*/
-					switch(typeItem.expr){
+					}
+					switch(ruleItem.expr.operator){
 						case '==':
-							result = typeItem.value == value;
+							result = ruleItem.expr.value == value;
 						break;
 						case '!=': 
-							result = typeItem.value != value; 
+							result = ruleItem.expr.value != value; 
 						break;
 						case '>':
-							result = (parseInt(typeItem.value,10)||0) > (parseInt(value,10)||0);
+							result = (parseInt(ruleItem.expr.value,10)||0) > (parseInt(value,10)||0);
 						break;
 						case '<':
-							result = (parseInt(typeItem.value,10)||0) < (parseInt(value,10)||0);
+							result = (parseInt(ruleItem.expr.value,10)||0) < (parseInt(value,10)||0);
 						break;
 						case '*=':
-							result = (value+'').indexOf(typeItem.value) != -1;
+							result = (value+'').indexOf(ruleItem.expr.value) != -1;
 						break;
 						case '$=': 
-							result = (value+'').lastIndexOf(typeItem.value) === (value+'').length - 1;
+							result = (value+'').lastIndexOf(ruleItem.expr.value) === (value+'').length - 1;
 						break;
 						case '^=':
-							result = (value+'').indexOf(typeItem.value) === 0;
+							result = (value+'').indexOf(ruleItem.expr.value) === 0;
 						break;
 					}
-
-					if(result){ 
-						var currentAction = TinySwitchActions[typeItem.action];
-						if(currentAction){
-							currentAction.call(elements, elements);
-							return false;
+				break;
+			}
+ 		  	
+			if(ruleItem.pos.length){ 
+				while(ruleItem.pos.length){ 
+					tempLevel = ruleItem.pos.shift(); 
+					tempLevel = tempLevel.match(/^(\d*)([a-zA-Z]+)$/);
+					loopTimes = !tempLevel[1] ? 1 : (parseInt(tempLevel[1],10) || 0);
+					tempLevel = tempLevel[2];
+					if(tempTarget[tempLevel]){
+						while(loopTimes){
+							tempTarget = tempTarget[tempLevel]();
+							loopTimes--;
 						}
 					}
-				});
-			}else{
-				$.each(actionTypes,function(index, typeItem){ 
-					var currentAction = TinySwitchActions[typeItem.action];
-					if(currentAction){
-						currentAction.call(elements, elements);
-					}
-				});
+				}
+				target = tempTarget;
 			}
+
+			elements = $(target).find(ruleItem.selector).add($(target).filter(ruleItem.selector))
+
+			if(result && ruleItem.ifDo.length){
+				runBranch = 'ifDo';
+			}else{
+				runBranch = 'elseDo';
+			} 
+
+			$.each(ruleItem[runBranch],function(index, item){
+				if(TinySwitchActions[item]){
+					TinySwitchActions[item].call(elements, elements)
+				}
+			});
 		});
 	}
 
@@ -224,10 +230,6 @@
 			$(elements).eq(0).focus();
 		}
 	}
-
-	//为enabled 和 disabled 做个别名
-	TinySwitchActions['off'] = TinySwitchActions['disabled'];
-	TinySwitchActions['on'] = TinySwitchActions['enabled'];
 
 	/*
 		TinySwitch
@@ -261,15 +263,11 @@
 				var rule = $(this).attr(HTML_DATA_PREFIX);
 				var placeAction;
 
-				if($(this).is('select') && rule){ 
-					placeAction = parseRule(rule, 'selectmode');
-				}else{
-					placeAction = parseRule(rule);
-				} 
+				if($(this).is('select') && !rule){ 
+					rule = $(this).find(':selected').attr(HTML_DATA_PREFIX);
+				}  
 
-				log(placeAction)
-
-				runSwitch(placeAction, $(this), actionType); 
+				runSwitch(rule, $(this)); 
 			})
 
 			.on(eventType,function(){
@@ -286,9 +284,7 @@
 
 			.triggerHandler(EVENT_PREFIX + 'switch')
 		});
-	}
-
-	
+	} 
 
 	//jQuery 插件 
 	$.fn.tinyswitch = function(options){
@@ -329,9 +325,9 @@
 				$(this).tinyswitch();
 			}
 
-			if($(this).is(HTML_DATA_PREFIX)){
+			if($(this).is(HTML_DATA_PREFIX) && $(this).data(JQUERY_DATA_PREFIX + 'init') !== true){
 				$(this).tinyswitch();
 			}
 		});
 	});
-}(jQuery))
+}(jQuery));

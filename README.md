@@ -179,17 +179,17 @@ data-tinyswitch="relativeflag$selector@action"
 
 `relativeflag` 支持如下标记:
 
-`!` 当前控件的`.parent()`
-`+` 当前控件的`.next()`
-`-` 当前控件的`.prev()`
-`^` 当前控件的`.prevAll()`
-`~` 当前控件的`.nextAll()`
+* `!` 当前控件的`.parent()`
+* `+` 当前控件的`.next()`
+* `-` 当前控件的`.prev()`
+* `^` 当前控件的`.prevAll()`
+* `~` 当前控件的`.nextAll()`
 
 对于`!`和`+`和`-`, `TinySwitch`还支持量词:
 
-`2!` 表示`.parent().parent()`
-`3+` 表示`.next().next().next()`
-`1-` 表示`.prev().prev()`
+* `2!` 表示`.parent().parent()`
+* `3+` 表示`.next().next().next()`
+* `1-` 表示`.prev().prev()`
 
 对于上面的例子,我们可以写成这样来实现需求:
 

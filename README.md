@@ -213,11 +213,11 @@ data-tinyswitch="relativeflag$selector@action"
 
 ### TinySwitch 默认自带的`action` 
 
-1. `show`   显示这个容器
-2. `hide`   隐藏这个容器
-3. `disabled` 或者 off   禁用这个控件, 或者禁用这个容器中的所有控件
-4. `enabled`  或者 on    启用这个控件, 或者启用这个容器中的所有控件
-5. `focus`    让当前的控件获得焦点
+1. `show`:   显示这个容器
+2. `hide`:   隐藏这个容器
+3. `disabled` 或者 `off`:  禁用这个控件, 或者禁用这个容器中的所有控件
+4. `enabled`  或者 `on`:  启用这个控件, 或者启用这个容器中的所有控件
+5. `focus`:    让当前的控件获得焦点
 
 你可以通过脚本来增加自定义的`action`
 

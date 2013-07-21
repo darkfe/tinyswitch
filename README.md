@@ -82,8 +82,8 @@ data-tinyswitch="selector@action"
 
 `#box@show(value==1)&hide(value!=1)` 表示:
 
-当`select`的`value == 1`的时候,执行`show`这个行为
-当`select`的`value != 1`的时候,执行`hide`这个行为 
+* 当`select`的`value == 1`的时候,执行`show`这个行为
+* 当`select`的`value != 1`的时候,执行`hide`这个行为 
 
 `(value==1)` 表达式中的`value`关键字表示当前`select`的`value`值
 

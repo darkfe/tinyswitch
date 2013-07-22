@@ -24,6 +24,19 @@
             console.log.apply(console,arguments);
     }
 
+    /*
+        解析 data-tinyswitch 属性里的规则
+
+        同时支持两种语法:
+        
+        1. 
+        checked ? action1 : action2 next~#container
+        value==1 ? action1 : action2 next~#container
+
+        2.
+        if(checked)take({next~#container})do(action1)else(action2)     
+        if(value==1)take({next~#container})do(action1)else(action2)     
+    */
     var parseRule = function(rule){
 
         /*

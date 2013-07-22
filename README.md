@@ -246,3 +246,6 @@ $.tinyswitch.addAction('clearValues',function(elements){
         $(this).attr('data-tinyswitchvalue',function(i,v){ return v==='true'?'false':'true' })
     });
 ```
+
+
+演示: http://darkfe.com/tinyswitch/demo.html

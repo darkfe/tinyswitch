@@ -253,18 +253,19 @@
 
             var target = $(this);
 
+            var eventType = target.is('select') ? 'change' : 'click';
+
+            //保证不重复绑定
             if(target.data(JQUERY_DATA_PREFIX + 'init') === true){
                 return;
             } 
 
             target 
 
+            //添加上标记
             .data(JQUERY_DATA_PREFIX + 'init',true); 
 
-            var eventType = target.is('select') ? 'change' : 'click';
-
-            target
-            
+            //绑定一个 switch 事件,当手动调用控件的checked = true|false 的时候,可以出发switch事件来调用切换逻辑
             .on(EVENT_PREFIX + 'switch',function(){
 
                 var actionType = $(this).is('select') ? 
@@ -274,16 +275,13 @@
                     ($(this).attr(HTML_DATA_PREFIX + 'value') === 'true' ? 'selected' : 'unselect'));
 
                 var rule = $(this).attr(HTML_DATA_PREFIX);
-                var placeAction;
-
-                if($(this).is('select') && !rule){ 
-                    rule = $(this).find(':selected').attr(HTML_DATA_PREFIX);
-                }  
 
                 runSwitch(rule, $(this)); 
             })
 
             .on(eventType,function(){
+
+            	//如果beforeswitch返回false, 停止switch执行
                 if($(this).triggerHandler(EVENT_PREFIX + 'beforeswitch') === false){
                     return;
                 } 
@@ -295,7 +293,7 @@
                 .triggerHandler(EVENT_PREFIX + 'afterswitch');
             })
 
-            .triggerHandler(EVENT_PREFIX + 'switch')
+            .triggerHandler(EVENT_PREFIX + 'switch');
         });
     } 
 
@@ -309,7 +307,9 @@
     */ 
     $.tinyswitch = {
         addAction : function(action, handler){
-            if(/^[\w\-]+$/.test(action)){
+
+        	//action key只能用数字和字符组成
+            if(/^\w+$/.test(action)){
                 if($.isFunction(handler)){
                     TinySwitchActions[action] = handler;
                 }

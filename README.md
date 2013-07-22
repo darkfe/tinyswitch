@@ -19,7 +19,7 @@ data-tinyswitch="expr ? action1 : action2 selector"
 
 就可以操控对应的内容展示隐藏,或者启用禁用,以及其他一些别的什么逻辑.
 
-* `expr`     为判断执行`action`方式, 目前支持判断`checked`,`unchecked`,`value`和`index`.
+* `expr`     为判断执行`action`方式, 目前支持判断`checked`,`value`和`index`.
 * `selector` 为标准的jQuery支持的css选择器, 它告诉`TinySwitch`, 谁是点击后的操作对象
 * `action1`  当`expr`结果为`true`时执行这个行为 
 * `action2`  当`expr`结果为`false`时执行这个行为 

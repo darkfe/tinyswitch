@@ -31,7 +31,7 @@
 
 <h2>单选框</h2>
 <div class="demo"> 
-<div class="form-inline" data-tsrule="@R value!=1 ? disabled : enabled&focus #A">
+<div class="form-inline" data-tsrule="@R value!~'^1$' ? disabled : enabled&focus #A">
     <label><input checked type="radio" name="R">一年</label>
     <label><input type="radio" name="R" >半年</label>
     <label><input type="radio" name="R" value="1">自定义</label>

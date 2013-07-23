@@ -7,14 +7,8 @@
 
 (function($){  
 
-    var FLAG = 'TINYSWITCH_' +new Date();
-    var DEBUG = false;
-
-    var log = function(){
-        if(DEBUG)
-            console.log.apply(console,arguments);
-    }
-
+    var FLAG = 'TINYSWITCH_' +new Date(); 
+ 
     /*
         解析 data-tinyswitch 属性里的规则
 
@@ -99,12 +93,12 @@
                             return intValueA > intValueB; 
                         case '<':
                             return  intValueA < intValueB; 
-                        case '*=':
-                            return strValueA.indexOf(valueB) != -1; 
-                        case '$=': 
-                            return strValueA.lastIndexOf(valueB) === strValueA.length - 1;
-                        case '^=':
-                            return strValueA.indexOf(valueB) === 0;
+                        //case '*=':
+                            //return strValueA.indexOf(valueB) != -1; 
+                        //case '$=': 
+                            //return strValueA.lastIndexOf(valueB) === strValueA.length - 1;
+                        //case '^=':
+                            //return strValueA.indexOf(valueB) === 0;
                         case '~' :
                             return new RegExp(valueB).test(strValueA); 
                         case '!~' :
@@ -121,26 +115,24 @@
                     result = compare(value, ruleItem.expr.operator, ruleItem.expr.value);
                 break;
             }
- 
-            if(ruleItem.pos.length){ 
-                while(ruleItem.pos.length){ 
-                    tempLevel = ruleItem.pos.shift().match(/^(\d*)([a-zA-Z]+)$/);  
-                    loopTimes = !tempLevel[1] ? 1 : (parseInt(tempLevel[1],10) || 0); 
-                    if(tempTarget[tempLevel = tempLevel[2]]){
-                        while(loopTimes){
-                            tempTarget = tempTarget[tempLevel]();
-                            loopTimes--;
-                        }
+  
+            while(ruleItem.pos.length){ 
+                tempLevel = ruleItem.pos.shift().match(/^(\d*)([a-zA-Z]+)$/);  
+                loopTimes = !tempLevel[1] ? 1 : (parseInt(tempLevel[1],10) || 0); 
+                if(tempTarget[tempLevel = tempLevel[2]]){
+                    while(loopTimes){
+                        tempTarget = tempTarget[tempLevel]();
+                        loopTimes--;
                     }
                 }
-                target = tempTarget;
-            } 
+                target = tempTarget
+            }  
  
             elements = $(target).find(ruleItem.selector).add($(target).filter(ruleItem.selector)); 
 
             $.each(ruleItem[(result && ruleItem.ifDo.length) ? 'ifDo' : 'elseDo'],function(index, item){
                 if(ACTIONS[item]){
-                    ACTIONS[item].call(elements, elements)
+                    ACTIONS[item].call(elements, elements, sender)
                 }
             });
         });
@@ -149,8 +141,7 @@
     /*
         TinySwitch
     */
-    var TinySwitch = function(elements){ 
-        console.log(elements)
+    var TinySwitch = function(elements){  
         return $(elements).each(function(){
   
             var target = $(this);
@@ -185,9 +176,9 @@
                 runSwitch(rule, $(this));
             })
 
-            .on(eventType,function(){ 
-
-            	//如果beforeswitch返回false, 停止switch执行
+            .on(eventType,function(){  
+            
+                //如果beforeswitch返回false, 停止switch执行
                 if($(this).triggerHandler(TinySwitch.eventBeforeSwitch) === false){
                     return;
                 } 
@@ -208,29 +199,27 @@
 
      /*
         默认支持的四个规则
-    */ 
-
+    */  
+    var controls = 'input,select,textarea';
     var ACTIONS = {
         'show' : function(elements){
-            $(elements).show();
+            elements.show();
         },
 
         'hide' : function(elements){
-            $(elements).hide();
+            elements.hide();
         },
 
-        'enabled' : function(elements){
-            var target = $(elements).is('input,select,textarea') ? $(elements) : $(elements).find('input, select, textarea');
-            target.attr('disabled', false);
+        'enabled' : function(elements){ 
+            elements.filter(controls).add(elements.find(controls)).attr('disabled', false);
         },
 
-        'disabled' : function(elements){ 
-            var target = $(elements).is('input,select,textarea') ? $(elements) : $(elements).find('input, select, textarea');
-            target.attr('disabled', true);
+        'disabled' : function(elements){  
+            elements.filter(controls).add(elements.find(controls)).attr('disabled', true);
         },
 
         'focus' : function(elements){
-            $(elements).eq(0).focus();
+            elements.eq(0).focus();
         }
     };
 

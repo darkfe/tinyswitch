@@ -5,18 +5,9 @@
  * Date: 2013/7/21
  */
 
-(function($){
-    /*
-        events:
-        tinyswitch.beforeswitch
-        tinyswitch.afterswitch 
-    */
-    var EVENT_PREFIX = 'tinyswitch.'
+(function($){  
 
-    var JQUERY_DATA_PREFIX = 'tinyswitch' + (+(Math.random()+'').slice(2)).toString(36) + '.';
-
-    var HTML_DATA_PREFIX = 'data-tinyswitch'; 
-
+    var FLAG = 'TINYSWITCH_' +new Date();
     var DEBUG = false;
 
     var log = function(){
@@ -27,171 +18,115 @@
     /*
         解析 data-tinyswitch 属性里的规则
 
-        同时支持两种语法:
-        
-        1. 
+        语法: 
         checked ? action1 : action2 next~#container
-        value==1 ? action1 : action2 next~#container
-
-        2.
-        if(checked)take({next~#container})do(action1)else(action2)     
-        if(value==1)take({next~#container})do(action1)else(action2)     
+        value==1 ? action1 : action2 next~#container   
     */
     var parseRule = function(rule){
 
-        /*
-        (?:;\s*)?
-        (
-        (?:
-        (?:value|index)
-        [=><!$*^]+
-        (?:\d+|'(?:\\'|[^'])+')
-        )|
-        (?:checked|unchecked)
-        )
-        \s
-        \?
-        \s
-        (\S+)
-        (?:
-        \s
-        \:
-        \s
-        (\S+))?
-        \s
-        (?:((?:\.\w+)*)~)?
-        ([^;]+)
-        */
-        var rulePattern1 = /(?:;\s*)?((?:(?:value|index)[=><!$*^]+(?:\d+|'(?:\\'|[^'])+'))|(?:checked|unchecked))\s\?\s(\S+)(?:\s\:\s(\S+))?\s(?:((?:\w+\.)*\w+)~)?((?:[^;']+|'(?:\\'|[^'])+')+)/ig;
+        var exprPattern = /(\w+)(?:([=><!$*^~]{1,2})((?:&?(?:\d+|'(?:\\'|[^'])+'))+))?/;
 
-        /*
-        (?:;\s*)?if\(
-        (
-        (?:
-        (?:value|index)
-        [=><!$*^]+
-        (?:\d+|'(?:\\'|[^'])+')
-        )|
-        (?:checked|unchecked)
-        )
-        \)
-        take\(
-        {(?:([^~]*)~)?((?:[^}']|'(?:\\'|[^'])+')+)}
-        \)
-        do\(
-        ([^)]+)
-        \)
-        (?:else\(
-        ([^)]+)
-        \))?
-        */
-        var rulePattern2 = /(?:;\s*)?if\(((?:(?:value|index)[=><!$*^]+(?:\d+|'(?:\\'|[^'])+'))|(?:checked|unchecked))\)take\({(?:([^~]*)~)?((?:[^}']|'(?:\\'|[^'])+')+)}\)do\(([^)]+)\)(?:else\(([^)]+)\))?/ig;
+        var mutipleValue = /(?:\d+|'(?:\\'|[^'])+')/g;
 
-        var exprPattern = /(\w+)(?:([=><!$*^]{1,2})\s*(?:(\d+)|'((?:\\'|[^'])+)'))?/i;
-
-        var rulePattern = rulePattern1;
-
-        var namedGroup = {
-            ifDo     : 2,
-            elseDo   : 3,
-            pos      : 4,
-            selector : 5
-        }
-
-        if(rule.indexOf('if(') === 0){
-
-            rulePattern = rulePattern2;
-
-            namedGroup = {
-                ifDo     : 4,
-                elseDo   : 5,
-                pos      : 2,
-                selector :3
-            }
-        }
-
+        var rulePattern = /(?:;\s*)?(?:@(\w+)\s)?((?:(?:value|index)[=><!$*^~]{1,2}(?:\d+|'(?:\\'|[^'])+')(?:&(?:\d+|'(?:\\'|[^'])+'))*)|(?:checked|selected))\s\?\s(\S+)(?:\s\:\s(\S+))?\s(?:((?:\w+\.)*\w+)~)?((?:[^;']+|'(?:\\'|[^'])+')+)/ig;
+        
         var current = null;
 
         var ruleList = [];
 
-        while(current = rulePattern.exec(rule)){
-
-            var expr = current[1].match(exprPattern);
-
+        while(current = rulePattern.exec(rule)){ 
+            var expr = current[2].match(exprPattern);
             ruleList.push({
+                group    : current[1],
                 expr     : {
                     keyword  : expr[1],
                     operator : expr[2],
-                    value    : expr[3] || expr[4]
-                }, 
-                ifDo     : (current[namedGroup.ifDo]||'').split('&'),
-                elseDo   : (current[namedGroup.elseDo]||'').split('&'),
-                pos      : (current[namedGroup.pos]||'') ? (current[namedGroup.pos]||'').split('.') : [],
-                selector : current[namedGroup.selector]
-            });
-        }
+                    value    : $.map((expr[3] || '').match(mutipleValue) || [], function(value, index){  
 
+                        if(value.indexOf('\'')===0){
+                            return value.slice(1,-1);
+                        }else{
+                            return value;
+                        }
+                    })
+                }, 
+                ifDo     : (current[3]||'').split('&'),
+                elseDo   : (current[4]||'').split('&'),
+                pos      : (current[5]||'') ? (current[5]||'').split('.') : [],
+                selector : current[6],
+                rule     : rule
+            });
+        } 
         return ruleList;
     } 
 
     var runSwitch = function(rule, sender){
  
         var ruleActions = parseRule(rule);
+        var valueProp = TinySwitch.propValue;
+        var checkedProp = TinySwitch.propChecked;
+        var value = sender.is('[' + valueProp + ']') ? sender.attr(valueProp) : sender.val(); 
 
         $.each(ruleActions, function(index, ruleItem){
- 
-            var result = false;
-            var value = $(sender).val();
+
+            var result = false; 
             var target = $(document); 
-            var tempTarget = $(sender);
+            var tempTarget = sender;
             var tempLevel;
             var elements = null;
-            var runBranch = '';
-            var loopTimes = 0;
+            var loopTimes = 0; 
+
+            var compare = function(valueA, operator, valueB){ 
+                var result = true;
+                if($.isArray(valueB)){ 
+                    $.each(valueB, function(index, value){
+                        if(compare(valueA, operator, value) === false){ 
+                            result = false;
+                            return false;
+                        }
+                    });  
+                    return result;
+                }else{  
+                    var intValueA = parseInt(valueA,10)||0;
+                    var intValueB = parseInt(valueB,10)||0;
+                    var strValueA = valueA+'';
+                    switch(operator){
+                        case '==':
+                            return valueA == valueB; 
+                        case '!=': 
+                            return valueA != valueB;  
+                        case '>':
+                            return intValueA > intValueB; 
+                        case '<':
+                            return  intValueA < intValueB; 
+                        case '*=':
+                            return strValueA.indexOf(valueB) != -1; 
+                        case '$=': 
+                            return strValueA.lastIndexOf(valueB) === strValueA.length - 1;
+                        case '^=':
+                            return strValueA.indexOf(valueB) === 0;
+                        case '~' :
+                            return new RegExp(valueB).test(strValueA); 
+                        case '!~' :
+                            return !(new RegExp(valueB).test(strValueA)); 
+                    }
+                }
+            }
 
             switch(ruleItem.expr.keyword){
                 case 'checked':
-                    result = $(sender).is(':checked');
+                    result = (sender.attr(checkedProp) === 'true') || sender.is(':checked');
                 break; 
                 case 'value':
-                case 'index':
-                    if(ruleItem.expr.keyword === 'index'){
-                        ruleItem.expr.value = parseInt(ruleItem.expr.value,10) || 0;
-                        value = $(sender)[0].selectedIndex;
-                    }
-                    switch(ruleItem.expr.operator){
-                        case '==':
-                            result = ruleItem.expr.value == value;
-                        break;
-                        case '!=': 
-                            result = ruleItem.expr.value != value; 
-                        break;
-                        case '>':
-                            result = (parseInt(ruleItem.expr.value,10)||0) > (parseInt(value,10)||0);
-                        break;
-                        case '<':
-                            result = (parseInt(ruleItem.expr.value,10)||0) < (parseInt(value,10)||0);
-                        break;
-                        case '*=':
-                            result = (value+'').indexOf(ruleItem.expr.value) != -1;
-                        break;
-                        case '$=': 
-                            result = (value+'').lastIndexOf(ruleItem.expr.value) === (value+'').length - 1;
-                        break;
-                        case '^=':
-                            result = (value+'').indexOf(ruleItem.expr.value) === 0;
-                        break;
-                    }
+                    result = compare(value, ruleItem.expr.operator, ruleItem.expr.value);
                 break;
             }
-               
+ 
             if(ruleItem.pos.length){ 
                 while(ruleItem.pos.length){ 
-                    tempLevel = ruleItem.pos.shift(); 
-                    tempLevel = tempLevel.match(/^(\d*)([a-zA-Z]+)$/);
-                    loopTimes = !tempLevel[1] ? 1 : (parseInt(tempLevel[1],10) || 0);
-                    tempLevel = tempLevel[2];
-                    if(tempTarget[tempLevel]){
+                    tempLevel = ruleItem.pos.shift().match(/^(\d*)([a-zA-Z]+)$/);  
+                    loopTimes = !tempLevel[1] ? 1 : (parseInt(tempLevel[1],10) || 0); 
+                    if(tempTarget[tempLevel = tempLevel[2]]){
                         while(loopTimes){
                             tempTarget = tempTarget[tempLevel]();
                             loopTimes--;
@@ -199,28 +134,83 @@
                     }
                 }
                 target = tempTarget;
-            }
-
-            elements = $(target).find(ruleItem.selector).add($(target).filter(ruleItem.selector))
-
-            if(result && ruleItem.ifDo.length){
-                runBranch = 'ifDo';
-            }else{
-                runBranch = 'elseDo';
             } 
+ 
+            elements = $(target).find(ruleItem.selector).add($(target).filter(ruleItem.selector)); 
 
-            $.each(ruleItem[runBranch],function(index, item){
-                if(TinySwitchActions[item]){
-                    TinySwitchActions[item].call(elements, elements)
+            $.each(ruleItem[(result && ruleItem.ifDo.length) ? 'ifDo' : 'elseDo'],function(index, item){
+                if(ACTIONS[item]){
+                    ACTIONS[item].call(elements, elements)
                 }
             });
         });
     }
 
     /*
-        默认支持的四个规则
+        TinySwitch
     */
-    var TinySwitchActions = {
+    var TinySwitch = function(elements){ 
+        console.log(elements)
+        return $(elements).each(function(){
+  
+            var target = $(this);
+
+            var eventType = target.is('select') ? 'change' : 'click';
+
+            //保证不重复绑定
+            if(target.data(FLAG) === 'true'){
+                return;
+            } 
+
+            target
+
+            //添加上标记
+            .data(FLAG,'true')
+
+            .on(TinySwitch.eventSwitching,function(){  
+
+                var groupName = $(this).attr(TinySwitch.propGroup);
+
+                var rule = $(this).attr(TinySwitch.propRule);
+ 
+                if(groupName && GROUP[groupName]){
+
+                    if($(this).is('[' + TinySwitch.propChecked + ']')){ 
+                        $('[' + TinySwitch.propChecked + '="' + groupName + '"]').attr(TinySwitch.propChecked, 'false');
+                        $(this).attr(TinySwitch.propChecked, 'true'); 
+                    } 
+                    rule = GROUP[groupName];  
+                }
+ 
+                runSwitch(rule, $(this));
+            })
+
+            .on(eventType,function(){ 
+
+            	//如果beforeswitch返回false, 停止switch执行
+                if($(this).triggerHandler(TinySwitch.eventBeforeSwitch) === false){
+                    return;
+                } 
+
+                $(this)
+                .triggerHandler(TinySwitch.eventSwitching);
+
+                $(this)
+                .triggerHandler(TinySwitch.eventAfterSwitch);
+            })
+
+            .filter('select, :checkbox, :radio:checked, [' + TinySwitch.propChecked + '==true]')
+
+            .triggerHandler(TinySwitch.eventSwitching); 
+
+        });
+    } 
+
+     /*
+        默认支持的四个规则
+    */ 
+
+    var ACTIONS = {
         'show' : function(elements){
             $(elements).show();
         },
@@ -242,105 +232,62 @@
         'focus' : function(elements){
             $(elements).eq(0).focus();
         }
-    }
+    };
 
-    /*
-        TinySwitch
-    */
-    var TinySwitch = function(elements){ 
+    var GROUP = {}; 
 
-        return $(elements).each(function(){
+    var LAST_STATE = {};
 
-            var target = $(this);
+    $.extend(TinySwitch,{
+        propGroup   : 'data-tsgroup',
+        propRule    : 'data-tsrule',
+        propChecked : 'data-tschecked',
+        propValue   : 'data-tsvalue',
 
-            var eventType = target.is('select') ? 'change' : 'click';
+        eventSwitching : 'switching',
+        eventBeforeSwitch : 'beforeswitch',
+        eventAfterSwitch  : 'afterswitch',
 
-            //保证不重复绑定
-            if(target.data(JQUERY_DATA_PREFIX + 'init') === true){
-                return;
-            } 
+        eventGroupSwitching : 'group.switching',
+        eventGroupBeforeSwitch : 'group.beforeswitch',
+        eventGroupAfterSwitch  : 'group.afterswitch',
 
-            target 
+        formNameGroup : true,
 
-            //添加上标记
-            .data(JQUERY_DATA_PREFIX + 'init',true); 
+        action : function(config){
+            $.extend(ACTIONS,config);
+        },
 
-            //绑定一个 switch 事件,当手动调用控件的checked = true|false 的时候,可以出发switch事件来调用切换逻辑
-            .on(EVENT_PREFIX + 'switch',function(){
-
-                var actionType = $(this).is('select') ? 
-                    'selected' : 
-                    ($(this).is(':checkbox,:radio') ?
-                    ($(this).is(':checked') ? 'selected' : 'unselect') :
-                    ($(this).attr(HTML_DATA_PREFIX + 'value') === 'true' ? 'selected' : 'unselect'));
-
-                var rule = $(this).attr(HTML_DATA_PREFIX);
-
-                runSwitch(rule, $(this)); 
-            })
-
-            .on(eventType,function(){
-
-            	//如果beforeswitch返回false, 停止switch执行
-                if($(this).triggerHandler(EVENT_PREFIX + 'beforeswitch') === false){
-                    return;
-                } 
-
-                $(this)
-                .triggerHandler(EVENT_PREFIX + 'switch');
-
-                $(this)
-                .triggerHandler(EVENT_PREFIX + 'afterswitch');
-            })
-
-            .triggerHandler(EVENT_PREFIX + 'switch');
-        });
-    } 
+        group  : function(config){
+            $.extend(GROUP, config);
+        }
+    }); 
 
     //jQuery 插件 
     $.fn.tinyswitch = function(options){
         return TinySwitch(this, options);
     }; 
-
-    /*
-        自定义添加规则
-    */ 
-    $.tinyswitch = {
-        addAction : function(action, handler){
-
-        	//action key只能用数字和字符组成
-            if(/^\w+$/.test(action)){
-                if($.isFunction(handler)){
-                    TinySwitchActions[action] = handler;
-                }
-            }else{
-                window.console && console.log && console.log('action字符中包含了[\w-]之外的字符.');
-            }
-        }
-    }
-
+ 
+    $.tinyswitch = TinySwitch;
+ 
     //默认加载
-    $(function(){
-        $('['+ HTML_DATA_PREFIX +']:not(option)').each(function(){
-            $(this).tinyswitch();
+    $(function(){ 
+        $('[' + TinySwitch.propRule + ']').each(function(){ 
+            var ruleStr = $(this).attr(TinySwitch.propRule); 
+            var groupName = '';
+            if(groupName = ruleStr.match(/^@(\w+)/i)){ 
+                GROUP[groupName[1]] = ruleStr.split(/^@\w+\s/)[1];
+            }else{
+                $(this).tinyswitch();
+            } 
         });
 
-        $('option['+ HTML_DATA_PREFIX +']').closest('select').tinyswitch();
+        $('[' + TinySwitch.propGroup + ']').tinyswitch();
 
-        $(document).on('click','['+HTML_DATA_PREFIX+']',function(){
-            if($(this).data(JQUERY_DATA_PREFIX + 'init') !== true){
-                $(this).tinyswitch();
-            }
-        });
-
-        $(document).on('change','select',function(){
-            if($(this).children().is(HTML_DATA_PREFIX) && $(this).data(JQUERY_DATA_PREFIX + 'init') !== true){
-                $(this).tinyswitch();
-            }
-
-            if($(this).is(HTML_DATA_PREFIX) && $(this).data(JQUERY_DATA_PREFIX + 'init') !== true){
-                $(this).tinyswitch();
-            }
-        });
+        if(TinySwitch.formNameGroup){ 
+            $.each(GROUP, function(name){ 
+                $('[name="' + name + '"]:not([' + TinySwitch.propGroup  + '])').attr(TinySwitch.propGroup, name).tinyswitch();
+            });
+        } 
     });
 }(jQuery));

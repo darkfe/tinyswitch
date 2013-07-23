@@ -6,10 +6,9 @@
         <title>
             tinyswitch demo
         </title>
-        <script src="http://libs.baidu.com/jquery/1.9.0/jquery.min.js">
-        </script>
-        <script src="http://libs.baidu.com/bootstrap/2.0.4/js/bootstrap.min.js">
-        </script>
+       <script src="http://libs.baidu.com/jquery/1.9.0/jquery.js"></script> 
+        <xscript src="http://libs.baidu.com/bootstrap/2.0.4/js/bootstrap.min.js">
+        </xscript>
         <link href="http://libs.baidu.com/bootstrap/2.0.4/css/bootstrap.min.css"
         rel="stylesheet">
         <script src="tinyswitch.js">
@@ -27,15 +26,20 @@
     
     <body>
     	<div class="container"> 
+
+
+
 <h2>单选框</h2>
 <div class="demo"> 
-<div class="form-inline">
-    <label><input checked type="radio" name="R" data-tinyswitch="checked ? disabled #A;">一年</label>
-    <label><input type="radio" name="R" data-tinyswitch="checked ? disabled #A">半年</label>
-    <label><input type="radio" name="R" data-tinyswitch="checked ? enabled&focus #A">自定义</label>
-    <label><input type="text" name="A" id="A"></label>  
+<div class="form-inline" data-tsrule="@R value!=1 ? disabled : enabled&focus #A">
+    <label><input checked type="radio" name="R">一年</label>
+    <label><input type="radio" name="R" >半年</label>
+    <label><input type="radio" name="R" value="1">自定义</label>
+    <label><input type="text"  id="A"  ></label>  
 </div>
 </div>
+
+
 <div class="demo-actions">
     <button class="btn">查看源码</button>
     <pre class="source" style="display:none"></pre>
@@ -44,7 +48,7 @@
 <h2>复选框</h2>
 <div class="demo">
 <div>
-    <label><input type="checkbox" name="R" data-tinyswitch="checked ? enabled&focusText : disabled #C">启用发送到邮箱功能</label> 
+    <label><input type="checkbox" name="R" data-tsrule="checked ? enabled&focusText : disabled #C">启用发送到邮箱功能</label> 
 </div>
 <div id="C">
     <form class="form-inline"> 
@@ -52,9 +56,9 @@
     </form>
 </div> 
 <script>
-    $.tinyswitch.addAction('focusText',function(ele){
+    $.tinyswitch.action({'focusText' : function(ele){
         $(ele).find(':text:eq(0)').focus();
-    })
+    }})
 </script>
 </div>
 <div class="demo-actions">
@@ -65,7 +69,7 @@
 
 <h2>下拉列表</h2>
 <div class="demo"> 
-    <select data-tinyswitch="value=='上海' ? show : hide #D">
+    <select data-tsrule="value=='上海' ? show : hide #D">
         <option value="北京">北京</option>
         <option value="上海">上海</option>
         <option value="广州">广州</option>
@@ -83,50 +87,54 @@
 <h2>相对控件定位目标</h2>
 <div class="demo">
 <div>
-    <div class="form-inline">
+   <div class="form-inline" data-tsrule="@S value!=1 ? show&focusText : hide parent.parent.next~.detail">
         <label>是否有过被骗的经历?</label>
-        <label><input checked type="radio" name="S" data-tinyswitch="checked ? show&focusText parent.parent.next~.detail">是的</label>
-        <label><input type="radio" checked name="S" data-tinyswitch="checked ? hide parent.parent.next~.detail">没有</label>
+        <label><input checked type="radio" name="S">是的</label>
+        <label><input type="radio" checked name="S" value="1">没有</label>
     </div>
     <div class="detail">
         请填写受骗的详细经过: <input type="text" name="" id="">
     </div>
-
-    <div class="form-inline">
+ 
+    
+    <div class="form-inline" data-tsrule="@M value!=0 ? show : hide parent.parent.next~.detail">
         <label>是否有过传销的经历?</label>
-        <label><input checked type="radio" name="M" data-tinyswitch="checked ? show parent.parent.next~.detail">是的</label>
-        <label><input type="radio" checked name="M" data-tinyswitch="checked ? hide parent.parent.next~.detail">没有</label>
+        <label><input checked type="radio" name="M">是的</label>
+        <label><input type="radio" checked name="M" value="0">没有</label> 
     </div>
     <div class="detail">
+        
         你干过什么传销?
-        <div class="form-inline">
-            <label><input checked type="radio" name="C" data-tinyswitch="checked ? disabled #P;">安利</label>
-            <label><input type="radio" name="C" data-tinyswitch="checked ? disabled #P">完美</label>
-            <label><input type="radio" name="C" data-tinyswitch="checked ? disabled #P">雅芳</label>
-            <label><input type="radio" name="C" data-tinyswitch="checked ? enabled&focus #P">其他</label>
+        <div class="form-inline" data-tsrule="@C value==1 ? enabled&focus : disabled #P">
+            <label><input checked type="radio" name="C">安利</label>
+            <label><input type="radio" name="C">完美</label>
+            <label><input type="radio" name="C">雅芳</label>
+            <label><input type="radio" name="C" value="1">其他</label>
             <label><input type="text" name="P" id="P"></label>
-        </div>
+        </div> 
     </div>
 </div>
 </div>
+
+
 <div class="demo-actions">
     <button class="btn">查看源码</button>
     <pre class="source" style="display:none"></pre>
 </div>
+
 
 <h2>多组规则</h2>
 <div class="demo"> 
-<div class="form-inline">
-    <label><input  type="radio" name="G" data-tinyswitch="checked ? hide h2:not(:last); checked ? hide .demo:not(:last); checked ? hide .demo-actions:not(:last)">把其他的例子都隐藏掉</label>
-    <label><input checked type="radio" name="G" data-tinyswitch="checked ? show h2:not(:last); checked ? show .demo:not(:last); checked ? show .demo-actions:not(:last)">显示其他的例子</label> 
+<div class="form-inline" data-tsrule="@G value==1 ? hide : show h2:not(:last); value==1 ? hide : show .demo:not(:last); value==1 ? hide : show .demo-actions:not(:last)">
+    <label><input  type="radio" name="G" value="1">把其他的例子都隐藏掉</label>
+    <label><input checked type="radio" name="G">显示其他的例子</label> 
 </div>
 </div>
 <div class="demo-actions">
     <button class="btn">查看源码</button>
     <pre class="source" style="display:none"></pre>
-</div>
-
-
+</div> 
+ 
             <script>
                 $(document).on('click', '.demo-actions .btn',function(){
                     var code = $(this).next();

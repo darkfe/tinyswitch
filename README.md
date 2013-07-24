@@ -71,8 +71,6 @@ data-tinyswitch="expr ? action1 : action2 selector"
 * 当`select`的`value != 1`的时候,执行`hide`这个行为 
 
 `value==1` 表达式中的`value`关键字表示当前`select`的`value`值
-
-`TinySwitch` 还支持`index`关键字,表示当前`select`的`selectIndex`索引
  
 
 表达式中目前支持如下运算符:
@@ -81,11 +79,10 @@ data-tinyswitch="expr ? action1 : action2 selector"
 * `!=`  不等
 * `>`   大于
 * `<`   小于
-* `*=`  包含
-* `$=`  结尾等于
-* `^=`  开头等于
+* `~`   正则匹配
+* `!~`  正则不匹配
 
-当与`value`或者`index`比较的值不是数字时,需要使用**单引号**将内容包裹起来.
+当与`value`比较的值不是数字时,需要使用**单引号**将内容包裹起来.
 
 如果在单引号中包含单引号,需要为单引号增加转义符`value='a\'b`.
 
@@ -247,5 +244,16 @@ $.tinyswitch.addAction('clearValues',function(elements){
     });
 ```
 
+
+### 更新日志
+
+**v0.2**
+
+1. 增加 `group` 支持
+2. 支持多值比较,可以在多`checkbox`和`select`的`multiple`模式下工作
+3. 移除所有看似很强大的,其实很少用不东西
+4. 移除`^=`,`$=`,`*=`操作符, 增加`~`和`!~`正则支持
+5. 移除`data-tsgroup`,支持使用表单的`name`属性
+6. 优化性能
 
 演示: http://darkfe.com/tinyswitch/demo.html

@@ -31,24 +31,23 @@
 
 <h2>单选框</h2>
 <div class="demo"> 
-<div class="form-inline" data-tsrule="@R value!=1 ? disabled : enabled&focus #A">
-    <label><input checked type="radio" name="R">一年</label>
+<div class="form-inline" data-tsrule="@R value!=111 ? disabled : enabled&focus #A">
+    <label><input checked type="radio" name="R" >一年</label>
     <label><input type="radio" name="R" >半年</label>
-    <label><input type="radio" name="R" value="1">自定义</label>
+    <label><input type="radio" name="R" value="111">自定义</label>
     <label><input type="text"  id="A"  ></label>  
 </div>
-</div>
-
+</div> 
 
 <div class="demo-actions">
     <button class="btn">查看源码</button>
     <pre class="source" style="display:none"></pre>
 </div>
 
-<h2>复选框</h2>
+<h2>单复选框</h2>
 <div class="demo">
-<div>
-    <label><input type="checkbox" name="R" data-tsrule="checked ? enabled&focusText : disabled #C">启用发送到邮箱功能</label> 
+<div >
+    <label><input type="checkbox" data-tsrule="checked ? enabled&focusText : disabled #C" value="2">启用发送到邮箱功能</label>  
 </div>
 <div id="C">
     <form class="form-inline"> 
@@ -64,12 +63,33 @@
 <div class="demo-actions">
     <button class="btn">查看源码</button>
     <pre class="source" style="display:none"></pre>
+</div> 
+
+<h2>多复选框 - 多个条件</h2>
+<div class="demo">
+<div  data-tsrule="@mv value==1&2 ? show : hide #MV"  >
+    只有选中 北京和上海 才会触发
+    <label><input type="checkbox" name="mv" value="1">北京</label>  
+    <label><input type="checkbox" name="mv" value="2">上海</label>  
+    <label><input type="checkbox" name="mv" value="3">广州</label>  
 </div>
+<div id="MV">
+    我出现了,厉害吧
+</div> 
+<script>
+    $.tinyswitch.action({'focusText' : function(ele){
+        $(ele).find(':text:eq(0)').focus();
+    }})
+</script>
+</div>
+<div class="demo-actions">
+    <button class="btn">查看源码</button>
+    <pre class="source" style="display:none"></pre>
+</div> 
 
-
-<h2>下拉列表</h2>
+<h2>单选下拉列表 </h2>
 <div class="demo"> 
-    <select data-tsrule="value=='上海' ? show : hide #D">
+    <select data-tsrule="value='上海' ? show : hide #D">
         <option value="北京">北京</option>
         <option value="上海">上海</option>
         <option value="广州">广州</option>
@@ -79,6 +99,37 @@
         非常抱歉由于银行系统升级,上海地区暂时无法入账.
     </div> 
 </div>
+
+<h2>多选下拉列表 </h2>
+<div class="demo"> 
+     只有选中 北京和上海 才会触发<br>
+    <select multiple data-tsrule="value='上海'&'北京' ? show : hide #V">
+        <option value="北京">北京</option>
+        <option value="上海">上海</option>
+        <option value="广州">广州</option>
+    </select>
+
+    <div id="V">
+        我又出现了,厉害吧
+    </div> 
+</div>
+
+<h2>下拉列表单个的option绑定规则 </h2>
+<div class="demo"> 
+     只有选中 上海 才会触发<br>
+    <select>
+        <option value="北京"  data-tsrule="selected ? hide #J">北京</option>
+        <option value="上海"  data-tsrule="selected ? show #J">上海</option>
+        <option value="广州"  data-tsrule="selected ? hide #J">广州</option>
+    </select>
+
+    <div id="J">
+        我又出现了,厉害吧
+    </div> 
+</div>
+
+
+
 <div class="demo-actions">
     <button class="btn">查看源码</button>
     <pre class="source" style="display:none"></pre>
@@ -116,7 +167,6 @@
 </div>
 </div>
 
-
 <div class="demo-actions">
     <button class="btn">查看源码</button>
     <pre class="source" style="display:none"></pre>
@@ -133,8 +183,8 @@
 <div class="demo-actions">
     <button class="btn">查看源码</button>
     <pre class="source" style="display:none"></pre>
-</div> 
- 
+</div>
+
             <script>
                 $(document).on('click', '.demo-actions .btn',function(){
                     var code = $(this).next();

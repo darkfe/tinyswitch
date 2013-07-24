@@ -1,5 +1,5 @@
 /*!
- * jQuery TinySwitch Plugin v0.1
+ * jQuery tinySwitch Plugin v0.2
  * Copyright 2013 darkfe(i@darkfe.com)
  * Released under the MIT license
  * Date: 2013/7/21
@@ -7,10 +7,10 @@
 
 (function($){  
 
-    var FLAG = 'TINYSWITCH_' +new Date(); 
+    var FLAG = 'tinySwitch_' +new Date(); 
  
     /*
-        解析 data-tinyswitch 属性里的规则
+        解析 data-tinySwitch 属性里的规则
 
         语法: 
         checked ? action1 : action2 next~#container
@@ -42,7 +42,7 @@
                         }else{
                             return value;
                         }
-                    })
+                    }).sort()
                 }, 
                 ifDo     : (current[3]||'').split('&'),
                 elseDo   : (current[4]||'').split('&'),
@@ -56,10 +56,21 @@
 
     var runSwitch = function(rule, sender){
  
-        var ruleActions = parseRule(rule);
-        var valueProp = TinySwitch.propValue;
-        var checkedProp = TinySwitch.propChecked;
-        var value = sender.is('[' + valueProp + ']') ? sender.attr(valueProp) : sender.val(); 
+        var ruleActions = parseRule(rule); 
+        var groupName = sender.attr('name');
+        var selectedControls = groupName ? 
+        (   
+            sender.is(':radio') ? 
+            sender : 
+            $('[name="' + groupName + '"]')
+        ) : sender;
+
+        var value =
+        (sender.is('select') ? sender.find(':selected') : selectedControls.filter(':checked'))
+        .map(function(){ 
+            return $(this).val();
+        }).get().sort(); 
+ 
 
         $.each(ruleActions, function(index, ruleItem){
 
@@ -70,52 +81,58 @@
             var elements = null;
             var loopTimes = 0; 
 
-            var compare = function(valueA, operator, valueB){ 
+            var compare = function(valueA, operator, valueB){  
+
                 var result = true;
-                if($.isArray(valueB)){ 
-                    $.each(valueB, function(index, value){
-                        if(compare(valueA, operator, value) === false){ 
-                            result = false;
-                            return false;
-                        }
-                    });  
-                    return result;
-                }else{  
-                    var intValueA = parseInt(valueA,10)||0;
-                    var intValueB = parseInt(valueB,10)||0;
-                    var strValueA = valueA+'';
-                    switch(operator){
-                        case '==':
-                            return valueA == valueB; 
-                        case '!=': 
-                            return valueA != valueB;  
-                        case '>':
-                            return intValueA > intValueB; 
-                        case '<':
-                            return  intValueA < intValueB; 
-                        //case '*=':
-                            //return strValueA.indexOf(valueB) != -1; 
-                        //case '$=': 
-                            //return strValueA.lastIndexOf(valueB) === strValueA.length - 1;
-                        //case '^=':
-                            //return strValueA.indexOf(valueB) === 0;
-                        case '~' :
-                            return new RegExp(valueB).test(strValueA); 
-                        case '!~' :
-                            return !(new RegExp(valueB).test(strValueA)); 
+                
+                if($.type(valueA) == 'array' && $.type(valueB) == 'array'){ 
+                    if(valueA.length != valueB.length){
+                        return false;
                     }
+                    $.each(valueA,function(index, value){  
+                        if(compare(value, operator, valueB[index]) === false){
+                            return result = false;
+                        }
+                    }); 
+                    return result;
                 }
+                var intValueA = parseInt(valueA,10)||0;
+                var intValueB = parseInt(valueB,10)||0;
+                var strValueA = valueA+'';
+                switch(operator){
+                    case '==':
+                        return valueA == valueB; 
+                    case '!=': 
+                        return valueA != valueB;  
+                    case '>':
+                        return intValueA > intValueB; 
+                    case '<':
+                        return  intValueA < intValueB; 
+                    //case '*=':
+                        //return strValueA.indexOf(valueB) != -1; 
+                    //case '$=': 
+                        //return strValueA.lastIndexOf(valueB) === strValueA.length - 1;
+                    //case '^=':
+                        //return strValueA.indexOf(valueB) === 0;
+                    case '~' :
+                        return new RegExp(valueB).test(strValueA); 
+                    case '!~' :
+                        return !(new RegExp(valueB).test(strValueA)); 
+                } 
             }
 
             switch(ruleItem.expr.keyword){
+                case 'selected' :
+                    result = true;
+                break;
                 case 'checked':
-                    result = (sender.attr(checkedProp) === 'true') || sender.is(':checked');
+                    result = sender.is(':checked');
                 break; 
                 case 'value':
                     result = compare(value, ruleItem.expr.operator, ruleItem.expr.value);
                 break;
             }
-  
+
             while(ruleItem.pos.length){ 
                 tempLevel = ruleItem.pos.shift().match(/^(\d*)([a-zA-Z]+)$/);  
                 loopTimes = !tempLevel[1] ? 1 : (parseInt(tempLevel[1],10) || 0); 
@@ -125,13 +142,13 @@
                         loopTimes--;
                     }
                 }
-                target = tempTarget
+                target = tempTarget;
             }  
  
             elements = $(target).find(ruleItem.selector).add($(target).filter(ruleItem.selector)); 
 
             $.each(ruleItem[(result && ruleItem.ifDo.length) ? 'ifDo' : 'elseDo'],function(index, item){
-                if(ACTIONS[item]){
+                if(ACTIONS[item]){ 
                     ACTIONS[item].call(elements, elements, sender)
                 }
             });
@@ -139,68 +156,67 @@
     }
 
     /*
-        TinySwitch
+        tinySwitch
     */
-    var TinySwitch = function(elements){  
+    var tinySwitch = function(elements){  
+
         return $(elements).each(function(){
   
             var target = $(this);
 
-            var eventType = target.is('select') ? 'change' : 'click';
-
             //保证不重复绑定
-            if(target.data(FLAG) === 'true'){
+            if(target.data(FLAG)){
                 return;
             } 
 
             target
 
             //添加上标记
-            .data(FLAG,'true')
+            .data(FLAG,'1')
 
-            .on(TinySwitch.eventSwitching,function(){  
+            .on(tinySwitch.eventSwitching,function(){  
 
-                var groupName = $(this).attr(TinySwitch.propGroup);
+                var that = $(this);
 
-                var rule = $(this).attr(TinySwitch.propRule);
+                var groupName = that.attr('name');
+
+                var rule =  
+                that.find(':selected').attr(tinySwitch.propRule) ||
+                that.attr(tinySwitch.propRule);  
  
                 if(groupName && GROUP[groupName]){
-
-                    if($(this).is('[' + TinySwitch.propChecked + ']')){ 
-                        $('[' + TinySwitch.propChecked + '="' + groupName + '"]').attr(TinySwitch.propChecked, 'false');
-                        $(this).attr(TinySwitch.propChecked, 'true'); 
-                    } 
-                    rule = GROUP[groupName];  
+                    rule = GROUP[groupName];
                 }
  
-                runSwitch(rule, $(this));
+                runSwitch(rule, that);
             })
 
-            .on(eventType,function(){  
+            .on(target.is('select') ? 'change' : 'click',function(){  
+ 
+                var th = 'triggerHandler', that = $(this);
             
                 //如果beforeswitch返回false, 停止switch执行
-                if($(this).triggerHandler(TinySwitch.eventBeforeSwitch) === false){
+                if(that[th](tinySwitch.eventBeforeSwitch) === false){
                     return;
                 } 
 
-                $(this)
-                .triggerHandler(TinySwitch.eventSwitching);
+                that[th](tinySwitch.eventSwitching);
 
-                $(this)
-                .triggerHandler(TinySwitch.eventAfterSwitch);
+                that[th](tinySwitch.eventAfterSwitch);
             })
 
-            .filter('select, :checkbox, :radio:checked, [' + TinySwitch.propChecked + '==true]')
+            .filter('select, :checkbox, :radio:checked')
 
-            .triggerHandler(TinySwitch.eventSwitching); 
-
+            .triggerHandler(tinySwitch.eventSwitching); 
         });
     } 
 
-     /*
+    
+    var CONTROLS = 'input,select,textarea';
+
+    /*
         默认支持的四个规则
     */  
-    var controls = 'input,select,textarea';
     var ACTIONS = {
         'show' : function(elements){
             elements.show();
@@ -211,11 +227,11 @@
         },
 
         'enabled' : function(elements){ 
-            elements.filter(controls).add(elements.find(controls)).attr('disabled', false);
+            elements.filter(CONTROLS).add(elements.find(CONTROLS)).attr('disabled', false);
         },
 
         'disabled' : function(elements){  
-            elements.filter(controls).add(elements.find(controls)).attr('disabled', true);
+            elements.filter(CONTROLS).add(elements.find(CONTROLS)).attr('disabled', true);
         },
 
         'focus' : function(elements){
@@ -223,23 +239,21 @@
         }
     };
 
+    /*
+        Group rules
+    */
     var GROUP = {}; 
 
-    var LAST_STATE = {};
-
-    $.extend(TinySwitch,{
-        propGroup   : 'data-tsgroup',
-        propRule    : 'data-tsrule',
-        propChecked : 'data-tschecked',
-        propValue   : 'data-tsvalue',
+    $.extend(tinySwitch,{ 
+        propRule    : 'data-tsrule', 
 
         eventSwitching : 'switching',
         eventBeforeSwitch : 'beforeswitch',
         eventAfterSwitch  : 'afterswitch',
 
-        eventGroupSwitching : 'group.switching',
-        eventGroupBeforeSwitch : 'group.beforeswitch',
-        eventGroupAfterSwitch  : 'group.afterswitch',
+        //eventGroupSwitching : 'group.switching',
+        //eventGroupBeforeSwitch : 'group.beforeswitch',
+        //eventGroupAfterSwitch  : 'group.afterswitch',
 
         formNameGroup : true,
 
@@ -253,30 +267,44 @@
     }); 
 
     //jQuery 插件 
-    $.fn.tinyswitch = function(options){
-        return TinySwitch(this, options);
+    $.fn.tinyswitch = function(){
+        tinySwitch(this);
+        return this;
     }; 
- 
-    $.tinyswitch = TinySwitch;
+    
+    /*
+        attach to jQuery object
+    */
+    $.tinyswitch = tinySwitch;
  
     //默认加载
     $(function(){ 
-        $('[' + TinySwitch.propRule + ']').each(function(){ 
-            var ruleStr = $(this).attr(TinySwitch.propRule); 
+
+        var nameElements = $(); 
+
+        if(tinySwitch.formNameGroup){ 
+            nameElements = $('[name]'); 
+            $.each(GROUP, function(name){ 
+                nameElements.filter('[name="' + name + '"])').tinyswitch();
+            });
+        } 
+        /*
+            收集group
+        */
+        $('[' + tinySwitch.propRule + ']').each(function(){ 
+            var ruleStr = $(this).attr(tinySwitch.propRule); 
             var groupName = '';
             if(groupName = ruleStr.match(/^@(\w+)/i)){ 
                 GROUP[groupName[1]] = ruleStr.split(/^@\w+\s/)[1];
+                $(nameElements).filter('[name="' + groupName[1] + '"]').tinyswitch();
             }else{
-                $(this).tinyswitch();
-            } 
+                if($(this).is('option')){
+                    $(this).closest('select').tinyswitch();
+                }else{
+                    $(this).tinyswitch();
+                }
+            }
         });
-
-        $('[' + TinySwitch.propGroup + ']').tinyswitch();
-
-        if(TinySwitch.formNameGroup){ 
-            $.each(GROUP, function(name){ 
-                $('[name="' + name + '"]:not([' + TinySwitch.propGroup  + '])').attr(TinySwitch.propGroup, name).tinyswitch();
-            });
-        } 
+        
     });
 }(jQuery));

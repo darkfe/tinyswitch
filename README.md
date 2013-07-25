@@ -14,7 +14,7 @@ TinySwitch 提供了这样的一种方案来试图简化(或者复杂化?)这个
 你只需要在控件上配置:
 
 ```
-data-tinyswitch="expr ? action1 : action2 selector"
+data-tsrule="expr ? action1 : action2 selector"
 ```
 
 就可以操控对应的内容展示隐藏,或者启用禁用,以及其他一些别的什么逻辑.
@@ -30,11 +30,11 @@ data-tinyswitch="expr ? action1 : action2 selector"
 
 ```html
 <label>
-  <input type="radio" data-tinyswitch="checked ? show #box"> 显示box
+  <input type="radio" data-tsrule="checked ? show #box"> 显示box
 </label>
 
 <label>
-  <input type="radio" data-tinyswitch="checked ? hide #box"> 隐藏box
+  <input type="radio" data-tsrule="checked ? hide #box"> 隐藏box
 </label>
 
 <div id="box">我是box</div>
@@ -47,7 +47,7 @@ data-tinyswitch="expr ? action1 : action2 selector"
 
 ```html
 <label>
-  <input type="checkbox" data-tinyswitch="checked ? show : hide #box"> 显示或者隐藏box
+  <input type="checkbox" data-tsrule="checked ? show : hide #box"> 显示或者隐藏box
 </label> 
 
 <div id="box">我是box</div>
@@ -57,7 +57,7 @@ data-tinyswitch="expr ? action1 : action2 selector"
 ### 下拉列表
 
 ```html
-<select data-tinyswitch="value==1 ? show : hide #box"> 
+<select data-tsrule="value==1 ? show : hide #box"> 
   <option value="1">value is 1</option>
   <option value="2">value is 2</option>
 </select>
@@ -92,7 +92,7 @@ data-tinyswitch="expr ? action1 : action2 selector"
 
 ```html
 <label>
-  <input type="checkbox" data-tinyswitch="checked ? show : hide #box,#list"> 显示或者隐藏box 和 list
+  <input type="checkbox" data-tsrule="checked ? show : hide #box,#list"> 显示或者隐藏box 和 list
 </label> 
 
 <div id="box">我是box</div>
@@ -107,7 +107,7 @@ data-tinyswitch="expr ? action1 : action2 selector"
 
 ```html
 <label>
-  <input type="checkbox" data-tinyswitch="checked ? show : hide #box; checked ? show : hide #list"> 显示或者隐藏box 和 list
+  <input type="checkbox" data-tsrule="checked ? show : hide #box; checked ? show : hide #list"> 显示或者隐藏box 和 list
 </label> 
 
 <div id="box">我是box</div>
@@ -120,7 +120,7 @@ data-tinyswitch="expr ? action1 : action2 selector"
 
 ```html
 <label>
-  <input type="checkbox" data-tinyswitch="checked ? show&disabled : hide #box"> 显示box,并且禁用box中的控件, 或者隐藏box
+  <input type="checkbox" data-tsrule="checked ? show&disabled : hide #box"> 显示box,并且禁用box中的控件, 或者隐藏box
 </label> 
 
 <div id="box">
@@ -138,7 +138,7 @@ data-tinyswitch="expr ? action1 : action2 selector"
 但有很多场景中, 我们需要相对于当前控件对目标的容器进行定位, 比如下例:
 
 ```html 
-<select data-tinyswitch="value==1 ? show : hide .list"> 
+<select data-tsrule="value==1 ? show : hide .list"> 
   <option value="1">启用</option>
   <option value="2">禁用</option> 
 </select>  
@@ -146,7 +146,7 @@ data-tinyswitch="expr ? action1 : action2 selector"
   <input type="text" value="我是一个文本框">
 </div>
 
-<select data-tinyswitch="value==1 ? show : hide .list"> 
+<select data-tsrule="value==1 ? show : hide .list"> 
   <option value="1">启用</option>
   <option value="2">禁用</option> 
 </select>
@@ -160,7 +160,7 @@ data-tinyswitch="expr ? action1 : action2 selector"
 针对这种场景 `TinySwitch` 提供了一种简单的标记方式来实现相对于当前控件的定位方式:
 
 ```
-data-tinyswitch="value==1 ? show : hide next~.list"
+data-tsrule="value==1 ? show : hide next~.list"
 ```
  
 * `next` 表示当前控件的`.next()`节点
@@ -178,7 +178,7 @@ data-tinyswitch="value==1 ? show : hide next~.list"
 
 
 ```
-data-tinyswitch="value==1 ? show : hide parent.next.next~.list"
+data-tsrule="value==1 ? show : hide parent.next.next~.list"
 ```
  
 
@@ -186,7 +186,7 @@ data-tinyswitch="value==1 ? show : hide parent.next.next~.list"
 
 
 ```html 
-<select data-tinyswitch="value==1 ? show : hide next~.list"> 
+<select data-tsrule="value==1 ? show : hide next~.list"> 
   <option value="1">启用</option>
   <option value="2">禁用</option> 
 </select>  
@@ -194,7 +194,7 @@ data-tinyswitch="value==1 ? show : hide parent.next.next~.list"
   <input type="text" value="我是一个文本框">
 </div>
 
-<select data-tinyswitch="value==1 ? show : hide next~.list"> 
+<select data-tsrule="value==1 ? show : hide next~.list"> 
   <option value="1">启用</option>
   <option value="2">禁用</option> 
 </select>
@@ -240,7 +240,7 @@ $.tinyswitch.addAction('clearValues',function(elements){
 ```javascript
     //使用按钮模拟一个switch
     $('#xxoo').on('tinyswitch.beforeswitch',function(){
-        $(this).attr('data-tinyswitchvalue',function(i,v){ return v==='true'?'false':'true' })
+        $(this).attr('data-tsrulevalue',function(i,v){ return v==='true'?'false':'true' })
     });
 ```
 
